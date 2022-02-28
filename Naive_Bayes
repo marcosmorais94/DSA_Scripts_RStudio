@@ -1,0 +1,129 @@
+# MODELOS NAIVE BAYES
+# -----------------------------------------------------------------------------
+
+# Nesse script são usados alguns exemplos mais básicos com Naive Bayes para
+# demonstrar a aplicação prática de um algoritmo com a classificação Guassiana.
+
+# -----------------------------------------------------------------------------
+
+#%% - EXEMPLO 1
+
+# Carregando Pacotes
+from sklearn import datasets
+from sklearn.naive_bayes import GaussianNB
+
+#%% - Dataset e Classificador
+
+# Carregando Dataset
+iris = datasets.load_iris()
+
+# Classificador
+clf = GaussianNB()
+
+#%% - Treino e Previsão com o Modelo
+
+# Modelo Iris
+modelo = clf.fit(iris.data, iris.target)
+
+# Previsões
+y_pred = modelo.predict(iris.data)
+
+#%% - Resultados do Modelo
+
+# Imprime resultado
+print('Total de Observsações: %d - Total de Previsões Incorretas: %d'
+      % (iris.data.shape[0], (iris.target != y_pred).sum()))
+
+#-----------------------------------------------------------------------------
+#%% - EXEMPLO 2
+
+# Carregando Pacotes
+from sklearn import datasets
+from sklearn import metrics
+from sklearn.naive_bayes import GaussianNB
+
+#%% - Dataset e Classificador
+
+# Dataset Iris
+dataset = datasets.load_iris()
+
+#Classificador
+clf = GaussianNB()
+
+#%% - Modelo e Previsões
+
+# Modelo
+modelo = clf.fit(dataset.data, dataset.target)
+print(modelo)
+
+#Previsões
+observado = dataset.target
+previsto = modelo.predict(dataset.data)
+
+#Sumário
+print(metrics.classification_report(observado, previsto))
+print(metrics.confusion_matrix(observado, previsto))
+
+#%% - EXEMPLO 3
+
+#Carregando Pacotes
+import numpy as np
+from sklearn.naive_bayes import GaussianNB
+from astroML.plotting import setup_text_plots
+import matplotlib.pyplot as plt
+from matplotlib import colors
+
+setup_text_plots(fontsize = 8, usetex = True)
+
+#%% - Pré-Processamento
+
+#Random Seed 
+np.random.seed(0)
+
+#Dados Aleatórios
+mu1 = [1, 1]
+cov1 = 0.3 * np.eye(2)
+mu2 = [5,3]
+cov2 = np.eye(2) * np.array([0.4, 0.1])
+
+#Concatenando
+X = np.concatenate([np.random.multivariate_normal(mu1, cov1, 100),
+                    np.random.multivariate_normal(mu2, cov2, 100)])
+
+y = np.zeros(200)
+y[100:] = 1 
+
+#%% - Modelo Preditivo
+
+#Criando Modelo 
+clf = GaussianNB()
+clf.fit(X, y)
+
+
+#%% - Previsões com Modelo
+
+#Previsões
+xlim = (-1, 8)
+ylim = (-1, 5)
+xx, yy = np.meshgrid(np.linspace(xlim[0], xlim[1], 71), 
+                     np.linspace(ylim[0], ylim[1], 81))
+z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])
+z = z[:, 1].reshape(xx.shape)
+
+#%% - Plot dos Resultados
+
+fig = plt.figure(figsize = (5, 3.75))
+ax = fig.add_subplot(111)
+ax.scatter(X[:, 0], X[:, 1], c = y, cmap = plt.cm.binary, zorder = 2)
+
+ax.contour(xx, yy, z, [0.5], colors = 'k')
+
+ax.set_xlim(xlim)
+ax.set_ylim(ylim)
+
+ax.set_xlabel('$x$')
+ax.set_ylabel('$y$')
+
+plt.show()
+
+# ----------------------------------------------------------------------------
