@@ -1,0 +1,61 @@
+# -------------------------------------------------------------------------------------------
+
+#Modelo de Regressão Lienar Simples
+
+# O Objetivo do modelo é prever o peso de um cerébro humano com base nas medidas da cabeça.
+
+# Este exercício é proposta pelo curso de Machine Learning da Data Science Academy.
+
+#-------------------------------------------------------------------------------------------
+
+# Carregando Pacotes
+import numpy as np
+import pandas as pd
+
+#%% - Configurando diretório de trabalho
+from os import chdir, getcwd
+
+chdir('C:\FCD\Python\Linear_Regression')
+getcwd()
+
+
+#%% - Carregando Dados
+
+# Dataset
+DB = pd.read_csv('data\pesos2.csv', sep = ',')
+DB.head()
+
+#%% - Definindo variáveis
+
+x = DB['Head Size'].values
+y = DB['Brain Weight'].values
+
+#%% - Calculando Coeficientes
+
+# Média x e y
+mean_x = np.mean(x)
+mean_y = np.mean(y)
+
+# Número total de valores
+n = len(x)
+
+# Usando fórmula para calcular coeficientes A e B
+numer = 0
+denom = 0
+
+for i in range(n):
+    numer += (x[i] - mean_x) * (y[i] - mean_y)
+    denom += (x[i] - mean_x) ** 2
+    
+b = numer / denom
+a = mean_y - (b * mean_x)
+
+#Imprimindo coeficientes
+print(a, b)
+
+#%% - Previsões com o modelo
+
+tamanho = 4450 #definir o peso desejado
+
+y = a + (b * tamanho)
+print('O peso do cérebro para o tamanho definido é estimado em :', y)
