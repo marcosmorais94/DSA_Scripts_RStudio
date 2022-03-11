@@ -87,3 +87,49 @@ scores = cross_val_score(clf, x, y)
 mean = scores.mean()
 print(scores)
 print(mean)
+
+
+#%% - USO DO ADABOOST
+
+#Pacotes
+
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import cross_val_score
+
+#%% Carga dos dados
+
+heart = fetch_openml('heart')
+
+x = heart.data
+y = np.copy(heart.target)
+y[y == -1] = 0
+
+#%% - Dados de Treino e Teste
+
+x_test, y_test = x[189:], y[189:]
+x_train, y_train = x[:189], y[:189]
+
+#%% - Estimador Base
+
+estim_base = DecisionTreeClassifier(max_depth=1, min_samples_leaf=1)
+
+#%% - V1 do Modelo AdaBoost
+
+ada_clf_v1 = AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=1, min_samples_leaf=1),
+                                learning_rate= 0.1,
+                                n_estimators=400,
+                                algorithm='SAMME')
+#%% - Treino Modelo
+
+ada_clf_v1.fit(x_train, y_train)
+
+#%% - Score do Modelo
+
+scores = cross_val_score(ada_clf_v1, x_test, y_test)
+print(scores)
+
+means = scores.mean()
+print(means)
