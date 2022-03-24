@@ -1,0 +1,179 @@
+# Lab 1 - Curso Machine Learning: Clusterização
+
+# Definindo Diretório de Trabalho
+setwd('C:/FCD/R/DSA')
+getwd()
+
+
+# Instalando e Carregando Pacotes
+install.packages('factoextra')
+install.packages('cluster')
+install.packages('fpc')
+install.packages('NbClust')
+install.packages('clValid')
+install.packages('clustertend')
+
+library(factoextra)
+library(cluster)
+library(fpc)
+library(NbClust)
+library(clValid)
+library(clustertend)
+
+# Carregando os Dados
+dados_clientes_v1 <- read.csv('dados_clientes.csv')
+str(dados_clientes_v1)
+names(dados_clientes_v1)
+View(dados_clientes_v1)
+summary(dados_clientes_v1)
+
+# Análise Exploratória
+
+#Tabela de proporção do sexo dos clientes
+tabela_sexos <- table(dados_clientes_v1$Sexo)
+tabela_sexos
+table(dados_clientes_v1$Sexo, useNA = 'ifany') # O arg useNA mostra na table se há valores NA.
+
+# Buscando valores missing para variáveis relacionadas a idade
+summary(dados_clientes_v1$Idade)
+# Se houver algum valor NA, o summary retorna na função
+
+# Buscando a média de idade
+mean(dados_clientes_v1$Idade)
+
+# Barplot de proporção do sexo dos clientes
+barplot(tabela_sexos,
+        main = 'Proporção de Sexo dos Clientes',
+        ylab = 'Total',
+        xlab = 'Sexo',
+        col = rainbow(2),
+        legend = rownames(tabela_sexos))
+
+# Histograma com a distribuição de frequência das idades dos clientes
+hist(dados_clientes_v1$Idade,
+     col = 'blue',
+     main = 'Histograma das Idades',
+     xlab = 'Idade',
+     ylab = 'Frequência',
+     labels = T)
+
+# Boxplot para análise descritiva das idades
+boxplot(dados_clientes_v1$Idade,
+        col = 3, 
+        main = 'Boxplot para Análise Descritiva da Idade')
+
+# Histograma com a Distribuição de Frequência do Salário Mensal
+names(dados_clientes_v1)
+summary(dados_clientes_v1$Salario_Mensal_Milhar)
+hist(dados_clientes_v1$Salario_Mensal_Milhar,
+     col = '#660033',
+     main = 'Histograma de Salário Mensal',
+     xlab = 'Salário Mensal',
+     ylab = 'Frequência',
+     labels = T)
+
+# Análise da Pontuação dos Clientes
+summary(dados_clientes_v1$Pontuacao_Gasto)
+
+boxplot(dados_clientes_v1$Pontuacao_Gasto,
+        horizontal = T,
+        col = '#990000',
+        main = 'Boxplot para Análise Decritivo da Pontuação do Cliente')
+
+hist(dados_clientes_v1$Pontuacao_Gasto,
+     main = 'Histograma de Pontuação de Gasto',
+     xlab = 'Pontuação de Gasto',
+     ylab = 'Frequência',
+     col = '#6600cc',
+     labels = T)
+
+# Pré - Processamento dos Dados
+# Pré - Processando e analisando os dados independente do sexo
+dados_clientes_v2 <- dados_clientes_v1[,-c(1,2)]
+head(dados_clientes_v2)
+
+# Padronizando as variáveis
+dados_clientes_v2_scaled <- scale(dados_clientes_v2)
+head(dados_clientes_v2_scaled)
+
+# Avaliando a Tendência de Cluster
+set.seed(123)
+hopkins(dados_clientes_v2_scaled, n = nrow(dados_clientes_v2_scaled)-1)
+
+# Valor = 0.3137406 indica que o dataset é 'clusterizável'
+# Valores > 0.5 indicam que não dá para fazer  o cluster
+# Valores < 0.5 indicam que dá para fazer o cluster
+
+# K-means - Determinando o Número Ideal de Clusters
+
+# Opção 1:
+
+num_cluters_opt1 <- NbClust(dados_clientes_v2_scaled,
+                            distance = 'euclidean',
+                            min.nc = 2,
+                            max.nc = 15,
+                            method = 'kmeans',
+                            index = 'silhouette')
+
+# O método silhouette usa uma medida para estimar o número ideal de clusters
+num_cluters_opt1$Best.nc #O ideal é 6 clusters
+num_cluters_opt1$All.index
+
+num_cluters_opt2 <- NbClust(dados_clientes_v2_scaled,
+                            distance = 'euclidean',
+                            min.nc = 2,
+                            max.nc = 15,
+                            method = 'kmeans',
+                            index = 'all')
+
+# O método all usa 3o indices para estimar o número ideal de clusters
+
+
+# Como a opção 1 foi igual 6 clusters e a opção 2 igual 2, optou-se por usar 4 clusters.
+
+# Criação do Modelo K-Means e Análise de Cluster
+modelo <- kmeans(dados_clientes_v2_scaled, 4)
+print(modelo)
+
+# Verificação do Tamanho dos Clusters
+modelo$size
+
+# Verificação dos Centros dos Clusters
+modelo$centers
+
+# Aplicando o ID dos Clusters ao DataFrame Original
+modelo$cluster
+dados_clientes_v1$Cluster <- modelo$cluster
+head(dados_clientes_v1)
+
+
+# Média de Idade por Cluster
+aggregate(data = dados_clientes_v1, Idade ~ Cluster, mean)
+
+# Média de Salário por Cluster
+aggregate(data = dados_clientes_v1, Pontuacao_Gasto ~ Cluster, mean)
+
+# Média de Idade e Salário por Cluster 
+aggregate(data = dados_clientes_v1, cbind(Idade, Salario_Mensal_Milhar) ~ Cluster, mean)
+
+# Total de Pessoas por Sexo e Cluster
+with(dados_clientes_v1, table(Sexo, Cluster))
+
+
+# Plot do Modelo
+plot(dados_clientes_v2_scaled, col = modelo$cluster, pch = 15)
+
+cluster_viz <- eclust(dados_clientes_v2_scaled, 
+                      'kmeans',
+                      k = 4, 
+                      nstart = 25, 
+                      graph = F)
+
+fviz_cluster(cluster_viz, geom = 'point', ellipse.type = 'norm')
+
+clusplot(dados_clientes_v1,
+         dados_clientes_v1$Cluster,
+         color = T,
+         shade = T,
+         labels = 5,
+         lines = 0)
